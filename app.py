@@ -56,10 +56,9 @@ st.markdown("""
     [data-testid="stMetricLabel"] { color: #6b7280 !important; font-weight: 600; }
     [data-testid="stMetricValue"] { color: #1f4e79 !important; font-weight: 700; }
 
-    /* 5. Buttons */
+    /* 5. Standard Buttons (Fix for dark text on dark background) */
     .stButton > button {
         background: #1f4e79 !important;
-        color: #ffffff !important;
         border: none;
         border-radius: 8px;
         padding: 0.5rem 1rem;
@@ -71,6 +70,30 @@ st.markdown("""
         background: #2d6ba3 !important;
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(31, 78, 121, 0.3);
+    }
+    /* Force all text inside buttons to be white */
+    .stButton > button p, .stButton > button span, .stButton > button div {
+        color: #ffffff !important;
+    }
+
+    /* 5b. Download Buttons */
+    .stDownloadButton > button {
+        background: #1f4e79 !important;
+        border: none !important;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(31, 78, 121, 0.2);
+        width: 100%;
+    }
+    .stDownloadButton > button:hover {
+        background: #2d6ba3 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(31, 78, 121, 0.3);
+    }
+    .stDownloadButton > button p, .stDownloadButton > button span, .stDownloadButton > button div {
+        color: #ffffff !important;
     }
 
     /* 6. Chat Messages */
@@ -92,6 +115,20 @@ st.markdown("""
     .stTabs [aria-selected="true"] {
         color: #1f4e79 !important; 
         border-bottom: 3px solid #1f4e79 !important;
+    }
+
+    /* 8. Code Blocks (Fix for invisible text in Schema and Generated Code) */
+    [data-testid="stCode"], [data-testid="stCodeBlock"] {
+        background-color: #1e1e2e !important; /* Dark background for code */
+        border: 1px solid #313244 !important;
+        border-radius: 8px !important;
+    }
+    [data-testid="stCode"] pre, [data-testid="stCodeBlock"] pre {
+        background-color: transparent !important;
+    }
+    /* Force all text inside code blocks to be light */
+    [data-testid="stCode"] span, [data-testid="stCodeBlock"] span {
+        color: #cdd6f4 !important; 
     }
 </style>
 """, unsafe_allow_html=True)
@@ -196,11 +233,11 @@ with tab_analyze:
         num_cols = df.select_dtypes(include='number').columns.tolist()
         cat_cols = df.select_dtypes(include='object').columns.tolist()
         
-        priority_num = [c for c in num_cols if c in ['points', 'sales', 'revenue', 'orders']]
+        priority_num = [c for c in num_cols if c in ['points', 'sales', 'revenue', 'orders', 'age']]
         if priority_num:
             num_cols = priority_num + [c for c in num_cols if c not in priority_num]
         
-        priority_cat = [c for c in cat_cols if c in ['driver', 'team', 'region', 'category']]
+        priority_cat = [c for c in cat_cols if c in ['driver', 'team', 'region', 'category', 'gender']]
         if priority_cat:
             cat_cols = priority_cat + [c for c in cat_cols if c not in priority_cat]
         
@@ -236,11 +273,11 @@ with tab_analyze:
         schema_text = profiler.profile_to_text(st.session_state.profile)
         start_time = time.time()
 
-        # CLEAN LOADING UI (Replaces the buggy st.status)
+        # CLEAN LOADING UI
         loading_placeholder = st.empty()
         with loading_placeholder.container():
             with st.spinner("🧠 Analyzing dataset locally... (This takes 10-20s)"):
-                time.sleep(0.5) # Small pause so the user sees the spinner
+                time.sleep(0.5) 
 
         max_attempts = 3
         code, result = None, None

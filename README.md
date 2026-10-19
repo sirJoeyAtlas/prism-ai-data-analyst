@@ -1,4 +1,4 @@
-# Local AI Data Analyst 🔮
+# Local AI Data Intelligence 🔮
 
 A privacy-first, natural language data analysis tool. Upload a dataset, ask questions in plain English, and get automated Pandas code, interactive Plotly charts, and plain-English explanations. 
 

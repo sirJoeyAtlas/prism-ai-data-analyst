@@ -7,56 +7,54 @@ RULES:
 - ALWAYS create a Plotly figure and store it in `fig`. This is REQUIRED.
 - Use only: pandas, numpy, plotly.express as px, plotly.graph_objects as go.
 - Never read files, never use os/sys/subprocess, never print.
-- If the question cannot be answered with the given columns, set result = "Cannot answer with available columns" and fig = None.
 
-DATA WARNING:
-The 'position' column contains strings like 'NC' (Not Classified) and 'DQ' (Disqualified). 
-If you need to do math on 'position' (like average or sorting), you MUST filter out the text first:
-clean_df = df[df['position'].astype(str).str.isnumeric()].copy()
-clean_df['position'] = clean_df['position'].astype(int)
+DATA CLEANING RULE:
+- If you need to do math on a column that might contain text (like 'NC', 'DNF'), filter it first:
+  clean_df = df[pd.to_numeric(df['column_name'], errors='coerce').notnull()]
 
-CHART SELECTION:
-- "highest / most / best / top" -> px.bar
-- Comparison between groups -> px.bar
-- Trend -> px.line
-- Distribution -> px.histogram
+CHART SELECTION & FORMATTING:
+- ALWAYS limit bar charts to the Top 10 using `.head(10)`.
+- For "highest/most/best", sort descending and use px.bar.
+- For trends, use px.line.
+- For distributions, use px.histogram.
 
 DATASET SCHEMA:
 {schema}
 
 EXAMPLES:
 
-Question: Which driver had the most points?
+Question: Which category had the highest total value?
 Code:
 import plotly.express as px
-grouped = df.groupby('driver')['points'].sum().reset_index().sort_values('points', ascending=False)
-fig = px.bar(grouped.head(10), x='driver', y='points', title='Top 10 Drivers by Points')
-result = grouped.iloc[0]['driver'] + " scored the most points with " + str(grouped.iloc[0]['points'])
+grouped = df.groupby('category')['value'].sum().reset_index().sort_values('value', ascending=False)
+fig = px.bar(grouped.head(10), x='category', y='value', title='Top 10 Categories by Value')
+top_category = grouped.iloc[0]['category']
+top_value = grouped.iloc[0]['value']
+result = str(top_category) + " had the highest total value with " + str(top_value)
 
-Question: Show total points by team.
+Question: Show the trend of sales over time.
 Code:
 import plotly.express as px
-grouped = df.groupby('team')['points'].sum().reset_index().sort_values('points', ascending=False)
-fig = px.bar(grouped, x='team', y='points', title='Total Points by Team')
-result = grouped
+time_data = df.groupby('date')['sales'].sum().reset_index()
+fig = px.line(time_data, x='date', y='sales', title='Sales Over Time')
+result = time_data
 
-Question: How many wins did Max Verstappen have?
+Question: What is the average age?
 Code:
-wins = len(df[(df['driver'] == 'Max Verstappen') & (df['position'] == '1')])
-result = "Max Verstappen had " + str(wins) + " wins."
-fig = px.bar(x=['Wins'], y=[wins], title='Max Verstappen Wins')
+import plotly.express as px
+avg_age = df['age'].mean()
+fig = px.histogram(df, x='age', title='Distribution of Age')
+result = "The average age is " + str(round(avg_age, 2))
 """
-
 
 EXPLAIN_SYSTEM = """You are a data analyst explaining results to a non-technical user.
 
 RULES:
 - Be concise (2-4 sentences).
-- State the key finding first.
-- Mention any caveats (missing data, small sample size).
+- Rely ONLY on the exact numbers and names provided in the result.
+- Do NOT make up numbers. Use exactly what is in the text.
 - Do not include code.
 """
-
 
 def code_gen_messages(schema: str, question: str, history: list = None) -> list:
     messages = [
@@ -68,7 +66,6 @@ def code_gen_messages(schema: str, question: str, history: list = None) -> list:
             messages.append({"role": "assistant", "content": h.get("generated_code", "")})
     messages.append({"role": "user", "content": question})
     return messages
-
 
 def explain_messages(question: str, code: str, result: str) -> list:
     return [
