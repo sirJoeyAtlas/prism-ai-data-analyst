@@ -1,0 +1,23 @@
+# Environments
+.venv/
+venv/
+env/
+
+# Secrets (NEVER push this)
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Data files
+data/uploads/*
+*.pdf
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
